@@ -1,0 +1,11 @@
+#!/bin/sh
+
+clear
+for (( ; ; ))
+do
+    echo "Currently Downloading"
+    transmission-remote -l
+    sleep 1
+    clear
+done
+
