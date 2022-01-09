@@ -4,4 +4,4 @@
 # 13/07/20 - Arthur Bais
 
 link="$(echo "$1" | sed "s/w/download\/torrents/")""-$2.torrent"
-tmra "$link"
+transadd "$link"

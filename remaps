@@ -3,13 +3,16 @@
 # This script is called on startup to remap keys.
 # Increase key speed via a rate change
 xset r rate 250 50
-# Map the caps lock key to escape...
-setxkbmap -option caps:super
+# Map the caps lock key to super...
+# setxkbmap -option caps:super
 # But when it is pressed only once, treat it as escape.
- killall xcape 2>/dev/null ; xcape -e 'Super_L=Escape'
-# Map the menu button to right super as well.
-# xmodmap -e 'keycode 135 = Super_R'
+# killall xcape 2>/dev/null ; xcape -e 'Super_L=Escape'
+setxkbmap 
+xmodmap -e 'keycode 66 = Escape'
+xmodmap -e 'keycode 9 = Caps_Lock'
+xmodmap -e 'clear lock'
+xset -r 9
 # Turn off the caps lock if on since there is no longer a key for it.
-xset -q | grep "Caps Lock:\s*on" && xdotool key Caps_Lock
-# Turn on NumLock on boot up
-xdotool key Num_Lock
+# xset -q | grep "Caps Lock:\s*on" && xdotool key Caps_Lock
+# Sets Num Lock to on with every login.
+xset -q | grep "Num Lock:\s*off" && xdotool key Num_Lock
