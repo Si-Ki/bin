@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo "Enter anime name:"
-read "name"
-echo "Enter episode number:"
-read ep
-animdl stream -q best "gogoanime:$name" -r $ep
