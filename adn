@@ -1,0 +1,3 @@
+#!/bin/sh
+
+animdl download -q best "gogoanime:$1"
