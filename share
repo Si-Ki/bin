@@ -1,4 +1,6 @@
 #!/bin/sh
 
-file=$(find $HOME -type f | dmenu -i -l 20)
+file=$(find $HOME -type f | dmenu -l 20)
+
 curl -F "file=@$file" 0x0.st | xclip -selection c && notify-send "📃 Your file has been copied to clipboard"
+

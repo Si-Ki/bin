@@ -1,3 +1,0 @@
-#!/bin/sh
-
-animdl stream -q best "gogoanime:$1" -r $2
