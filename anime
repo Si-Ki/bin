@@ -1,3 +1,5 @@
 #!/bin/sh
 
-animdl stream -q best "zoro:$1" -r $2
+ep=${2:-1-}
+name=$(echo $1 | sed 's/-/ /g')
+animdl stream -q best "animixplay:$name" -r $ep

@@ -2,5 +2,4 @@
 
 file=$(find $HOME -type f | dmenu -l 20)
 
-curl -F "file=@$file" 0x0.st | xclip -selection c && notify-send "📃 Your file has been copied to clipboard"
-
+curl -F "file=@$file" https://0x0.st | xclip -selection c && notify-send "📃 Your file has been copied to clipboard"
