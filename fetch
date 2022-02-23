@@ -47,15 +47,15 @@ init
 
 cat <<EOF
 ${c0} ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-${c0} ▎                    ${c2}  ${c0} ${c3}  ${c0}${c1}  ${c0}▎ ${c1}${c4}${c1} ${c4}$user@${c1}$host
+${c0} ▎                    ${c2}  ${c0} ${c3}  ${c0}${c1}   ${c0}▎ ${c1}${c4}${c1} ${c4}$user@${c1}$host
 ${c0} ▎                            ▎ ${c4}
 ${c0} ▎        ${c4}█▀▀▀▀▀▀▀▀▀█${c0}         ▎ ${c4}OS     ${c7} $os
 ${c0} ▎        ${c4}█  ▁   ▁  █${c0}         ▎ ${c4}WM     ${c7} $wm
-${c0} ▎        ${c0}█         █${c0}         ▎ ${c4}Shell  ${c7} $shell
+${c0} ▎        ${c0}█ ${c4}       █${c0}         ▎ ${c4}Shell  ${c7} $shell
 ${c0} ▎        ${c0}▀█▄▄▄▄▄▄▄█▀${c0}         ▎ ${c4}Kernel ${c7} $kernel
 ${c0} ▎                            ▎ ${c4}pkgs   ${c7} $pkgs
 ${c0} ▎                            ▎ ${c4}uptime ${c7} $(get_uptime)
-${c0} ▎    ${c4}arch  ^_^ linux     ${c0} ▎ $colors
+${c0} ▎      ${c4}arch ^_^ systemd     ${c0} ▎ $colors
 ${c0} ▎▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
 ${c0}
 EOF

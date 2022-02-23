@@ -1,4 +1,0 @@
-#!/bin/sh
-
-clock=$(date)
-date "+%A, %d/%m/%Y  %H:%M:%S |"
