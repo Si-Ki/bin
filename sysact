@@ -1,7 +1,7 @@
 #!/bin/sh
 # A dmenu wrapper script for system functions.
 
-case "$(printf " Logout\n Renew\n Reboot\n Kill\n Sleep" | dmenu -i -b -fn "Font Awesome 6 Free:size=13")" in
+case "$(printf " Logout\n Renew\n Reboot\n Kill\n Sleep" | dmenu -i -b)" in
 	' Logout') kill -TERM "$(pgrep -u "$USER" "\bdwm$")" ;;
 	' Renew') kill -HUP "$(pgrep -u "$USER" "\bdwm$")" ;;
 	' Sleep') slock & systemctl suspend ;;
