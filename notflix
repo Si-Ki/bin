@@ -69,7 +69,8 @@ curl -s $fullURL > $cachedir/tmp.html
 magnet=$(grep -Po "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" $cachedir/tmp.html | head -n 1)
 
 # Choice to Stream or Download
-choice=$(printf "Stream\n Download" | dmenu -i )
-[ $choice = Stream ] && webtorrent "$magnet" --mpv & notify-send "Enjoy Watching"
-[ $choice = Download ] && transadd "$magnet"
-[ -z $choice ] && exit 0
+choice=$(printf "Stream\nDownload\nCopyout" | dmenu -i )
+[ $choice = Stream ] && webtorrent "$magnet" --mpv
+[ $choice = Download ] && transadd "$magnet" && exit 0
+[ $choice = Copyout ] && echo "$magnet" | xclip -sel c && notify-send "Link copied to Clipboard" && exit 0
+[ -z $choice ] && notify-send "No Results selected. Exiting... 🔴" && exit 0
