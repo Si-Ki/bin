@@ -1,0 +1,3 @@
+#!/bin/env bash
+
+notify-send "Get up, look away, walk a little."

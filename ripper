@@ -1,0 +1,40 @@
+#!/bin/python
+
+import random
+import string
+import time
+
+import httpx
+
+
+def iter_random(n, *, choices=string.ascii_letters + string.digits):
+    for _ in range(n):
+        yield random.choice(choices)
+
+
+url = "https://api.cloudflareclient.com/v0a{}/reg".format(
+    "".join(iter_random(3, choices=string.digits))
+)
+
+def execute(session, wrap_id):
+    installation = "".join(iter_random(22))
+
+    return session.post(
+        url,
+        json={
+            "key": "{}=".format("".join(iter_random(43))),
+            "install_id": installation,
+            "fcm_token": "{}:APA91b{}".format(installation, "".join(iter_random(143))),
+            "referrer": wrap_id,
+            "warp_enabled": False,
+        },
+        headers={
+            "User-Agent": "okhttp/3.12.1",
+        },
+    )
+
+
+client = httpx.Client()
+for _ in iter(int, 1):
+    print(execute(client, "f7391715-5a7e-4824-a348-e2fbeaf671ed").text)
+    time.sleep(20)

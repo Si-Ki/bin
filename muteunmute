@@ -1,0 +1,7 @@
+#!/bin/env bash
+
+pactl set-source-mute @DEFAULT_SOURCE@ toggle
+
+stat=$(pactl get-source-mute @DEFAULT_SOURCE@)
+
+notify-send "Microphone $stat"
