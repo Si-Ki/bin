@@ -5,7 +5,7 @@
 mkdir -p $HOME/.cache/notflix
 
 menu="dmenu -i -l 30"
-baseurl="https://1337x.wtf"
+baseurl="https://1337x.to"
 cachedir="$HOME/.cache/notflix"
 
 if [ -z $1 ]; then
@@ -70,7 +70,7 @@ magnet=$(grep -Po "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" $cachedir/tmp.html | head 
 
 # Choice to Stream or Download
 choice=$(printf "Stream\nDownload\nCopyout" | dmenu -i )
-[ $choice = Stream ] && webtorrent "$magnet" --mpv
+[ $choice = Stream ] && peerflix -k "$magnet"
 [ $choice = Download ] && transadd "$magnet" && exit 0
-[ $choice = Copyout ] && echo "$magnet" | xclip -sel c && notify-send "Link copied to Clipboard" && exit 0
+[ $choice = Copyout ] && echo $magnet | xclip -sel c && notify-send "Link copied to Clipboard" && exit 0
 [ -z $choice ] && notify-send "No Results selected. Exiting... 🔴" && exit 0

@@ -1,26 +1,26 @@
 #!/bin/env bash
 
-if [ -d $HOME/.cache/piratebay ]; then
-	cachedir=$HOME/.cache/piratebay
+if [ -d $HOME/.cache/pflix ]; then
+	cachedir=$HOME/.cache/pflix
 else
-	mkdir $HOME/.cache/piratebay && cachedir=$HOME/.cache/piratebay
+	mkdir $HOME/.cache/pflix && cachedir=$HOME/.cache/pflix
 fi
 
 # Take input.
 if [ -z $1 ]; then
 	query=$(dmenu -p "Search Torrent: " <&-)
 else
-	query=$*
+	query=$1
 fi
 
 query="$(echo $query | sed 's/ /+/g')"
 
 # Get the required output form webpage.
-curl "https://arrrr.ga/api.php?url=/q.php?q=$query&cat=" | jq '.[] | {name, info_hash}' | sed -E 's/[{}]/\n/g' > $cachedir/names.txt
+curl -s "https://apibay.org/q.php?q=$query&cat=0" | jq '.[] | {name, info_hash}' | sed -E 's/[{}]/\n/g' > $cachedir/names.txt
 
 # Dmenu list for names of torrents.
 name=$(grep -E '\"name\": \".*\",' $cachedir/names.txt | cut -d\" -f4 | dmenu -l 10)
-ih=$(grep -EA1 "$name" $cachedir/names.txt | head -n2 | grep -E '\"info_hash\": \".*\"' | cut -d\" -f4)
+ih=$(grep -A1 "$name" $cachedir/names.txt --fixed-strings | head -n2 | grep -Eo '[A-Z0-9]{40}')
 
 name=$(echo $name | sed 's/ /%20/g' | sed 's/:/%3A/g')
 
@@ -29,7 +29,9 @@ magnet="magnet:?xt=urn:btih:$ih&dn=$name&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%
 
 # Choice to Stream or Download
 choice=$(printf "Stream\nDownload\nCopyout" | dmenu -i )
-[ $choice = Stream ] && webtorrent "$magnet" --mpv
-[ $choice = Download ] && transadd "$magnet" && exit 0
-[ $choice = Copyout ] && echo "$magnet" | xclip -sel c && notify-send "Link copied to Clipboard" && exit 0
+[ $choice = Stream ] && peerflix -k "$magnet" & notify-send "Streaming Torrent..."
+[ $choice = Download ] && transadd "$magnet"
+[ $choice = Copyout ] && echo $magnet | xclip -sel c && notify-send "Link copied to Clipboard"
 [ -z $choice ] && notify-send "No Results selected. Exiting... 🔴" && exit 0
+
+exit 0
