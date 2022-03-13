@@ -6,6 +6,6 @@ case "$(printf " Logout\n Renew\n Reboot\n Kill\n Sleep" | dmenu 
 	' Renew') kill -HUP "$(pgrep -u "$USER" "\bdwm$")" ;;
 	' Sleep') slock & systemctl suspend ;;
 	' Reboot') reboot ;;
-	' Kill') shutdown now ;;
+	' Kill') shutdown -h now ;;
 	*) exit 1 ;;
 esac
