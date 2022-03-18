@@ -1,5 +1,5 @@
 #!/bin/sh
 
-ep=${2:-1-}
-name=$(echo $1 | sed 's/-/ /g')
-animdl download -q best "animixplay:$name" -r $ep
+ep="${2:-1-}"
+name="$(echo $1 | sed 's/-/ /g')"
+animdl download -q best "animixplay:$name" -r "$ep"

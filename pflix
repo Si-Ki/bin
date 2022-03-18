@@ -1,37 +1,33 @@
 #!/bin/env bash
 
-if [ -d $HOME/.cache/pflix ]; then
-	cachedir=$HOME/.cache/pflix
-else
-	mkdir $HOME/.cache/pflix && cachedir=$HOME/.cache/pflix
-fi
+warp-cli connect > /dev/null
 
 # Take input.
-if [ -z $1 ]; then
+if [ -z "$*" ]; then
 	query=$(dmenu -p "Search Torrent: " <&-)
 else
-	query=$1
+	query="$*"
 fi
 
-query="$(echo $query | sed 's/ /+/g')"
+query="$(echo $query | sed -e "s/ /+/g")"
 
 # Get the required output form webpage.
-curl -s "https://apibay.org/q.php?q=$query&cat=0" | jq '.[] | {name, info_hash}' | sed -E 's/[{}]/\n/g' > $cachedir/names.txt
+names="$(curl -s "https://apibay.org/q.php?q=$query&cat=0" | jq '.[] | {name, info_hash, seeders, leechers}' | sed -E 's/[{}]//g')"
 
-# Dmenu list for names of torrents.
-name=$(grep -E '\"name\": \".*\",' $cachedir/names.txt | cut -d\" -f4 | dmenu -l 10)
-ih=$(grep -A1 "$name" $cachedir/names.txt --fixed-strings | head -n2 | grep -Eo '[A-Z0-9]{40}')
+name="$(printf "$names" | grep -E "\"seeders\":" | awk -F "[\"\"]" '{print "[Seeds:" $4 "]"}' | paste - <(printf "$names" | grep -E "\"leechers\":" | awk -F "[\"\"]" '{print "[Leeches:" $4 "]"}') | paste - <(printf "$names" | grep -E '\"name\": \".*\",' | cut -d\" -f4) | dmenu -l 20 | awk -F "\t" '{print $3}')"
 
-name=$(echo $name | sed 's/ /%20/g' -e 's/:/%3A/g')
+ih="$(printf "$names" | grep -A1 "$name" --fixed-strings | head -n2 | grep -Eo '[A-Z0-9]{40}')"
+
+name="$(echo "$name" | sed 's/ /%20/g' -e 's/:/%3A/g')"
 
 # Generate the magnet link.
 magnet="magnet:?xt=urn:btih:$ih&dn=$name&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2920%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.pirateparty.gr%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce"
 
+warp-cli disconnect > /dev/null
+
 # Choice to Stream or Download
 choice=$(printf "Stream\nDownload\nCopyout" | dmenu -i )
-[ $choice = Stream ] && peerflix -k "$magnet" & notify-send "Streaming Torrent..."
-[ $choice = Download ] && transadd "$magnet"
-[ $choice = Copyout ] && echo $magnet | xclip -sel c && notify-send "Link copied to Clipboard"
-[ -z $choice ] && notify-send "No Results selected. Exiting... 🔴" && exit 0
-
-exit 0
+[ "$choice" = Stream ] && peerflix -k "$magnet" & notify-send "Streaming Torrent..."
+[ "$choice" = Download ] && transadd "$magnet"
+[ "$choice" = Copyout ] && echo $magnet | xclip -sel c && notify-send "Link copied to Clipboard"
+[ -z "$choice" ] && notify-send "No Results selected. Exiting... 🔴" && exit 0
