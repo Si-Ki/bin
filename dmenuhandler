@@ -5,7 +5,7 @@
 # feed="${1:-$(printf "%s" | dmenu -p 'Paste URL or file path')}"
 feed="${1:-$(xclip -sel c -out)}"
 
-case "$(printf "sxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nvim\\nmpv\\nmpv loop\\nmpv float\\nqueue download\\nqueue yt-dl\\nqueue yt-dl audio" | dmenu -i -p "Open with?")" in
+case "$(printf "sxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nvim\\nmpv\\nmpv loop\\nmpv float\\nqueue download\\nqueue yt-dl\\nqueue yt-dl audio\\ngrab" | dmenu -i -p "Open with?")" in
 	mpv) setsid -f mpv -quiet "$feed" >/dev/null 2>&1 ;;
 	"mpv loop") setsid -f mpv -quiet --loop "$feed" >/dev/null 2>&1 ;;
 	"mpv float") setsid -f "$TERMINAL" -e mpv --geometry=+0-0 --autofit=30%  --title="mpvfloat" "$feed" >/dev/null 2>&1 ;;
@@ -18,4 +18,5 @@ case "$(printf "sxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nvim\\nmpv\\nmpv loop\\nmpv
 	setbg) curl -L "$feed" > $XDG_CACHE_HOME/pic ; xwallpaper --zoom $XDG_CACHE_HOME/pic >/dev/null 2>&1 ;;
 	browser) setsid -f "$BROWSER" "$feed" >/dev/null 2>&1 ;;
 	lynx) lynx "$feed" >/dev/null 2>&1 ;;
+	grab) echo "$feed" | xclip -sel c ;;
 esac
