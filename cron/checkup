@@ -1,7 +1,7 @@
 #!/bin/sh
+export "XDG_RUNTIME_DIR"="/run/user/"$(id -u)""
 
 # Syncs repositories and downloads updates, meant to be run as a cronjob.
-
 notify-send "📦 Repository Sync" "Checking for package updates..."
 
 sudo pacman -Syyuw --noconfirm || notify-send "Error downloading updates.
