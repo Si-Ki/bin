@@ -1,0 +1,61 @@
+#!/bin/sh
+
+baseurl="https://wallhaven.cc"
+
+# Ask for input.
+if [ -z "$@" ]; then
+	printf "Search for wallpapers: " && read -r query
+else
+	query="$@"
+fi
+
+down_dir="$query-wallpapers"
+mkdir "$down_dir" > /dev/null
+
+query="$(echo "$query" | sed 's/ /+/g')"
+
+curl -s "$baseurl/search?q=$query&page=1" | pup | grep -Eo 'https:\/\/wallhaven\.cc\/w\/[a-z0-9]+' > "$down_dir/links.txt"
+
+awk -F "/" '{print $5}' "$down_dir/links.txt" > "$down_dir/linkss.txt"
+
+# Fabricating the wallpaper links and downloading.
+fabricate () {		# couldn't think of a better name for this function :)
+for line in $(cat "$down_dir/linkss.txt"); do
+	if curl --output /dev/null --silent --head --fail "https://w.wallhaven.cc/full/$(printf '%s' "$line" | grep -o "^..")/wallhaven-$line.jpg"; then curl "https://w.wallhaven.cc/full/$(printf '%s' "$line" | grep -o "^..")/wallhaven-$line.jpg" -o "$down_dir/$line.jpg"
+	fi;
+done
+}
+
+die () {
+	rm "$down_dir"/*.txt && exit 0
+}
+
+fabricate
+
+printf "Download the next page as well? [y/n]: "
+read ans1
+
+if [ "$ans1" = y ]; then
+	curl -s "$baseurl/search?q=$query&page=2" | pup | grep -Eo 'https:\/\/wallhaven\.cc\/w\/[a-z0-9]+' > "$down_dir/links.txt" && \
+	awk -F "/" '{print $5}' "$down_dir/links.txt" > "$down_dir/linkss.txt" && \
+	fabricate
+	elif [ "$ans1" = n ]; then
+		die
+	elif [ "$ans1" = * ]; then
+		die
+fi
+
+printf "Are you fucking crazy and want to download even more? [y/n]: "
+read ans2
+
+if [ $ans2 = y ]; then
+	curl -s "$baseurl/search?q=$query&page=3" | pup | grep -Eo 'https:\/\/wallhaven\.cc\/w\/[a-z0-9]+' > "$down_dir/links.txt" && \
+	awk -F "/" '{print $5}' "$down_dir/links.txt" > "$down_dir/linkss.txt" && \
+	fabricate
+	elif [ "$ans2" = n ]; then
+		die
+	elif [ "$ans2" = * ]; then
+		die
+fi
+
+rm "$down_dir"/*.txt > /dev/null

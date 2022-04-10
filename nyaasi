@@ -1,0 +1,40 @@
+#!/bin/sh
+
+warp-cli connect > /dev/null
+
+cachedir="$HOME/.cache/nyaasi"
+
+[ -d "$cachedir" ] || mkdir "$cachedir"
+
+# Take input.
+if [ -z $* ]; then
+	query=$(dmenu -p "Search Torrent: " <&-)
+else
+	query=$*
+fi
+
+query="$(echo $query | sed 's/ /+/g')"
+
+curl -s "https://nyaa.si/?f=0&c=1_2&q=$query" > $cachedir/temp.html
+
+# Get names.
+grep -Eo '<a href=\"/view/[0-9]{7}\" title=\".*\"' $cachedir/temp.html | cut -d\" -f4 > $cachedir/names.tmp
+
+# Get sizes.
+grep -Eo "[0-9]{1,3}\.[0-9] (M|G)iB" $cachedir/temp.html | awk '{print "[Size: "$1" "$2"]" }' > $cachedir/size.tmp
+
+# Get Seeds & Leeches
+grep -E -A10 '<a href=\"/view/[0-9]{7}\" title=\".*\"' "$cachedir/temp.html" | grep -E "<td class=\"text-center\">[0-9]+<\/td>" | awk -F "[><]" 'NR % 2 == 1 {printf "[Seeds: " $3 "]"} NR % 2 == 0 {print " [Leeches: " $3 "]"}' > $cachedir/SL.tmp
+
+# YOINK together.
+name="$(paste -d\  $cachedir/SL.tmp $cachedir/size.tmp $cachedir/names.tmp | dmenu -l 10 | sed -E "s/\[Seeds:.*Size: [0-9]{1,3}\.[0-9]{,3} (G|M)iB\] //g")"
+
+# Generate magnet link.
+magnet="$(grep -A4 "$name" $cachedir/temp.html --fixed-strings | grep -Eo 'magnet:\?xt=urn:btih:.*announce')"
+
+warp-cli disconnect > /dev/null
+
+choice=$(printf "Play\nDownload\nGrab" | dmenu -i )
+[ "$choice" = Play ] && peerflix -k "$magnet"
+[ "$choice" = Download ] && transadd -k "$magnet" > /dev/null
+[ "$choice" = Grab ] && echo "$magnet" | xclip -sel c
