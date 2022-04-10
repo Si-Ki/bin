@@ -2,4 +2,4 @@
 
 file=$(find $HOME -type f | dmenu -l 20)
 
-printf "$(curl -s -T "$file" https://oshi.at | awk '/\[Download\]/ {print $1}' | xclip -sel c && notify-send "📃" "Your file has been copied to clipboard")"
+printf "$(curl -s -T "$file" https://oshi.at | awk '/\[Download\]/ {print $1}')" | xclip -sel c && notify-send "📃" "Your file has been copied to clipboard"
