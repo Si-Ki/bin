@@ -1,0 +1,13 @@
+#!/bin/sh
+
+choice=$(for i in $(printf "$(find $HOME/.local/share/emojis/)"); do printf "${i##*/}\n"; done | dmenu -i)
+[ -z "$choice" ] && exit 0
+
+printf "https://gitlab.com/thecashewtrader/emojis/-/raw/main/$choice" | xclip -sel c
+
+xdotool key ctrl+v
+sleep 0.15
+xdotool key Return
+
+
+# Inspiration: https://github.com/demonkingswaran/scripts.

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+doas systemctl start bluetooth.service
+bluetoothctl power on
+bluetoothctl connect 23:10:18:B3:8E:83 && dunstify "🎧" "Connected!"

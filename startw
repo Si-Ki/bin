@@ -1,0 +1,15 @@
+#!/bin/bash
+ 
+# Hyprland shit
+export _JAVA_AWT_WM_NONREPARENTING=1
+export QT_QPA_PLATFORM="wayland;xcb"
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+export XDG_SESSION_TYPE=wayland
+export MOZ_ENABLE_WAYLAND=1
+export XCURSOR_SIZE=18
+export QT_QPA_PLATFORMTHEME="gtk3"	# Have QT use gtk3 theme.
+
+export XDG_CONFIG_HOME="$HOME/.config"
+
+exec Hyprland

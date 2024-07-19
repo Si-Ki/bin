@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Syncs repositories and downloads updates, meant to be run as a cronjob.
+dunstify "📦 Repository Sync" "Checking for package updates..." -r 6969
+
+sudo pacman -Syyuw --noconfirm || dunstify "Error downloading updates. Check your internet connection, if pacman is already running, or run update manually to see errors."
+
+if pacman -Qu | grep -v "\[ignored\]"
+then
+  act=$(dunstify "🎁 Repository Sync" "Updates available." --action="default,Click to update." -r 6969 -t 0)
+else
+  dunstify "📦 Repository Sync" "Sync complete. No new packages for update." -r 6969
+fi
+
+[ "$act" = "default" ] && footclient -a popp -e popupgrade

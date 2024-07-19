@@ -1,0 +1,22 @@
+#!/bin/sh
+#this script uses the piratesbay api to search for torrents
+
+cal_size() {
+    printf "%.03f\n" "$(($1/1000))e-6"
+}
+
+display() {
+    for i in $(seq "$(printf "%s\nlol" "$2" | wc -l)");do
+	printf "[%s GB;S:%s\n" "$(cal_size "$(printf "%s" "$1" | sed -n "${i}p")")" "$(printf "%s" "$2" | sed -n "${i}p")" & done
+    wait
+}
+
+[ -z "$*" ] && printf "\033[1;34mSearch torrent: " && read -r query || query=$*
+query=$(printf "%s" "$query" | tr " " "+")
+data=$(curl -s "https://apibay.org/q.php?q=$query" | sed 's/},/}\n/g' | tr -d "[|]")
+size=$(printf "%s" "$data" | sed -nE 's/.*name.*size":"(.*)",.*user.*/\1/p')
+name_seed=$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash.*seeders":"(.*)",.*num.*/\2] \1/p')
+sel=$(display "$size" "$name_seed" | fzf --prompt="Select torrent:-" | cut -d" " -f3-)
+[ -z "$sel" ] && printf "\33[2K\r\033[1;31mNo Torrent Selected" && exit 0 || printf "\33[2K\r\033[1;32mSelected \033[0m$sel\n"
+magnet="magnet:?xt=urn:btih:$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash":"(.*)",.*leech.*/\2\t\1/p' | sed -n "s/\t$sel//p" | head -1)"
+trad "$magnet" > /dev/null

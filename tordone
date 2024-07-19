@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# stupid script until I figure out how to make it a variable or a funciton.
+# act=$(dunstify --action="default,☑️ Torrent Complete!" -t 0)
+dunstify "☑️ Torrent Complete!"
+
+# [ "$act" = "default" ] && st -c trt -e trt

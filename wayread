@@ -1,0 +1,31 @@
+#!/bin/sh
+
+bkdir="$XDG_DATA_HOME/Books"
+
+# Select file
+cd "$bkdir"
+
+picker() {
+  sel="$(ls | tofi --prompt-text "Read:")"
+  if [ -d "$sel" ]; then
+    cd "$sel"
+    picker
+  elif
+    [ -f "$sel" ]; then
+    sel_file="$sel"
+  fi
+  sel_file="$bkdir/$sel_file"
+}
+
+picker
+
+# Get filetype
+filetype="$(file --mime-type -b "$sel_file")"
+
+# Open file
+case "$filetype" in
+  application/epub+zip ) foot -f "Iosevka Nerd Font:size=18" -a epyterm -e epy "$sel_file"
+  ;;
+  application/pdf ) hyprctl dispatch exec [workspace 5] zathura "$sel_file"
+  ;;
+esac

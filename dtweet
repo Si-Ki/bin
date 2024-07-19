@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Function to extract information from HTML
+extract_info() {
+    tweet_text=$(echo "$1" | grep -oP '(?<=<p lang="en" dir="ltr">).*(?=</p>)' | sed 's/&#39;/'"'"'/g')
+    tweet_url=$(echo "$1" | grep -oP '(?<=<a href=")https://t.co/[a-zA-Z0-9]+')
+    author=$(echo "$1" | grep -oP '(?<=@)[^)]+')
+    date=$(echo "$1" | grep -oP '\w+ \d+, \d{4}')
+}
+
+# Function to send message to Discord
+send_to_discord() {
+    local webhook_url="$1"
+    local content="$2"
+    local author="$3"
+    local date="$4"
+    local tweet_url="$5"
+    
+    curl -H "Content-Type: application/json" \
+         -d '{
+           "embeds": [{
+             "author": {
+               "name": "'"The Block (@$author)"'",
+               "icon_url": "https://pbs.twimg.com/profile_images/1580573312711254017/9l-Fv4yd_400x400.jpg"
+             },
+             "description": "'"$content"'",
+             "color": 1942002,
+             "footer": {
+               "text": "'"Twitter • $date"'"
+             },
+             "thumbnail": {
+               "url": "https://pbs.twimg.com/profile_images/1580573312711254017/9l-Fv4yd_400x400.jpg"
+             }
+           }],
+           "components": [{
+             "type": 1,
+             "components": [{
+               "type": 2,
+               "style": 5,
+               "label": "View on Twitter",
+               "url": "'"$tweet_url"'"
+             }]
+           }]
+         }' \
+         "$webhook_url"
+}
+
+# Main script
+read -d '' html_input
+
+extract_info "$html_input"
+
+# Replace this with your actual Discord webhook URL
+webhook_url="https://discord.com/api/webhooks/1261299829712093195/-yRUGSMGRH8oXwYH1AXk2Il3OvgEZ0xFx1gsfrIeAbpULBKkZJqj5-_OOEKzqoTcH0Kt"
+
+send_to_discord "$webhook_url" "$tweet_text" "$author" "$date" "$tweet_url"
