@@ -1,3 +1,3 @@
 #!/bin/sh
 
-firefox --new-window discord.com/channels/@me
+firefox -kiosk -new-window https://discord.com/channels/@me
