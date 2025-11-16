@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # Syncs repositories and downloads updates, meant to be run as a cronjob.
-dunstify "📦 Repository Sync" "Checking for package updates..." -r 6969
+fyi -a update -r 69 "📦 Repository Sync" "Checking for package updates..."
 
-sudo pacman -Syyuw --noconfirm || dunstify "Error downloading updates. Check your internet connection, if pacman is already running, or run update manually to see errors."
+sudo pacman -Syyuw --noconfirm || fyi -a update "Error downloading updates. Check your internet connection, if pacman is already running, or run update manually to see errors."
 
 if pacman -Qu | grep -v "\[ignored\]"
 then
-  act=$(dunstify "🎁 Repository Sync" "Updates available." --action="default,Click to update." -r 6969 -t 0)
+  act=$(fyi -r 69 -a update -t 0 -A default:fuck "🎁 Repository Sync" "Updates available.")
 else
-  dunstify "📦 Repository Sync" "Sync complete. No new packages for update." -r 6969
+  fyi -a update -r 69 "📦 Repository Sync" "Sync complete. No new packages for update."
 fi
 
-[ "$act" = "default" ] && footclient -a popp -e popupgrade
+[ "$act" = "action=default" ] && footclient -a popp -e popupgrade

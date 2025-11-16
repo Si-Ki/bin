@@ -1,0 +1,4 @@
+#!/bin/sh
+
+bootctl set-oneshot auto-windows
+systemctl hibernate

@@ -603,7 +603,7 @@ update_progress() {
         -H "Authorization: Bearer $access_token" \
         -d "{\"query\":\"mutation(\$id:Int \$mediaId:Int \$status:MediaListStatus \$score:Float \$progress:Int \$progressVolumes:Int \$repeat:Int \$private:Boolean \$notes:String \$customLists:[String]\$hiddenFromStatusLists:Boolean \$advancedScores:[Float]\$startedAt:FuzzyDateInput \$completedAt:FuzzyDateInput){SaveMediaListEntry(id:\$id mediaId:\$mediaId status:\$status score:\$score progress:\$progress progressVolumes:\$progressVolumes repeat:\$repeat private:\$private notes:\$notes customLists:\$customLists hiddenFromStatusLists:\$hiddenFromStatusLists advancedScores:\$advancedScores startedAt:\$startedAt completedAt:\$completedAt){id mediaId status score advancedScores progress progressVolumes repeat priority private hiddenFromStatusLists customLists notes updatedAt startedAt{year month day}completedAt{year month day}user{id name}media{id title{userPreferred}coverImage{large}type format status episodes volumes chapters averageScore popularity isAdult startDate{year}}}}\",\"variables\":{\"status\":\"$3\",\"progress\":$1,\"mediaId\":$2}}"
     [ "$3" = "COMPLETED" ] && send_notification "Completed $title" "5000"
-    [ "$3" = "COMPLETED" ] && $sed -i "/$media_id/d" "$history_file"
+    [ "$3" = "COMPLETED" ] && $sed -i "/$media_id/d" "$history_file" 2>/dev/null
 }
 
 update_episode_from_list() {
@@ -1148,12 +1148,12 @@ add_to_history() {
                 send_notification "Error" "" "" "Could not update progress"
             else
                 send_notification "Updated progress to $((progress + 1))/$episodes_total episodes watched" ""
-                [ -n "$history" ] && $sed -i "/^$media_id/d" "$history_file"
+                [ -n "$history" ] && $sed -i "/^$media_id/d" "$history_file" 2>/dev/null
             fi
         else
             if [ -n "$history" ]; then
                 if [ $((progress + 1)) -eq "$episodes_total" ]; then
-                    $sed -i "/^$media_id/d" "$history_file"
+                    $sed -i "/^$media_id/d" "$history_file" 2>/dev/null
                     send_notification "Completed" "" "" "$title"
                 else
                     $sed -i "s/^${media_id}\t[0-9/]*\t[0-9:]*/${media_id}\t$((progress + 2))\/${episodes_total}\t00:00:00/" "$history_file"
@@ -1167,10 +1167,10 @@ add_to_history() {
     else
         send_notification "Current progress" "" "" "$progress/$episodes_total episodes watched"
         [ -z "$no_anilist" ] && send_notification "Your progress has not been updated"
-        if ! grep -q "^$media_id" "$history_file" 2>&1; then
+        if ! grep -q "^$media_id" "$history_file" 2>/dev/null; then
             printf "%s\t%s/%s\t%s\t%s\n" "$media_id" "$((progress + 1))" "$episodes_total" "$stopped_at" "$title" >>"$history_file"
         else
-            $sed -i "s/^${media_id}\t[0-9/]*\t[0-9:]*/${media_id}\t$((progress + 1))\/${episodes_total}\t${stopped_at}/" "$history_file"
+            $sed -i "s/^${media_id}\t[0-9/]*\t[0-9:]*/${media_id}\t$((progress + 1))\/${episodes_total}\t${stopped_at}/" "$history_file" 2>/dev/null
         fi
         send_notification "Stopped at: $stopped_at" "5000"
     fi
@@ -1193,6 +1193,7 @@ play_video() {
             fi
             [ -n "$history" ] && resume_from=$(printf "%s" "$history" | cut -f3)
             opts="$player_arguments"
+            [ "$provider" = "allanime" ] && opts="$opts --http-header-fields-append=Referer:https://allanime.day/"
             if [ -n "$resume_from" ]; then
                 opts="$opts --start=${resume_from}"
                 send_notification "Resuming from" "" "" "$resume_from"
@@ -1436,7 +1437,7 @@ main() {
             binge "MANGA"
             ;;
         "Resume from History")
-            history_choice=$($sed -n "1h;1!{x;H;};\${g;p;}" "$history_file" | nl -w 1 | nth "Choose an entry: ")
+            history_choice=$($sed -n "1h;1!{x;H;};\${g;p;}" "$history_file" 2>/dev/null | nl -w 1 | nth "Choose an entry: ")
             media_id=$(printf "%s" "$history_choice" | cut -f1)
             progress=$(printf "%s" "$history_choice" | cut -f2 | cut -d'/' -f1)
             progress=$((progress - 1))

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+base="www.subtitlecat.com/index.php"
+query=$1 | tr -d ' ' '+'
+
+find(){
+  curl "https://$base?search=$query"
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [[ -z "${SAFE_BATTERY_LEVEL}" ]]; then
-	SAFE_BATTERY_LEVEL=20
+	SAFE_BATTERY_LEVEL=10
 fi
 
 if [[ -z "${NOTIF_TIMEOUT}" ]]; then
@@ -14,5 +14,5 @@ percentage=$(echo $info | awk '{print $NF}' | cut -d "%" -f1)
 
 if [[ $percentage -lt $SAFE_BATTERY_LEVEL && $state == "discharging" ]]; then
   notify-send -t $NOTIF_TIMEOUT -u critical "Battery level critical!" \
-	  "Connect Charger  <br />Battery level is at $percentage%"
+	  "Connect Charger "
 fi
