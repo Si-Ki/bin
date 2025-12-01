@@ -1,44 +1,29 @@
 #!/usr/bin/env bash
-# Requires: playerctl, systemctl --user
-set -eu
 
-# Function to stop/start wluma
-start_wluma() {
-  systemctl --user start wluma.service || true
+is_video() {
+    # Playerctl metadata
+    mime=$(playerctl metadata xesam:contentType 2>/dev/null)
+    url=$(playerctl metadata xesam:url 2>/dev/null)
+    video=$(playerctl metadata xesam:video 2>/dev/null)
+    title=$(playerctl metadata xesam:title 2>/dev/null | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$video" == "true" ]]; then return 0; fi
+    if [[ "$mime" == video/* ]]; then return 0; fi
+    if [[ "$url" == *"watch?v="* && "$url" != *"music.youtube.com"* ]]; then return 0; fi
+
+    if [[ "$title" == *"youtube music"* ]]; then return 1; fi
+
+    return 1
 }
-stop_wluma() {
-  systemctl --user stop wluma.service || true
-}
 
-# If playerctl not found, exit
-if ! command -v playerctl >/dev/null 2>&1; then
-  echo "playerctl not found; please install playerctl or use the dbus-monitor fallback."
-  exit 1
-fi
-
-# Do an initial check
-status=$(playerctl status 2>/dev/null || echo "")
-if [[ "$status" == "Playing" ]]; then
-  stop_wluma
-else
-  start_wluma
-fi
-
-# Follow playback state changes and react
-# playerctl --follow status prints lines like "Playing", "Paused", etc.
-playerctl --follow status | while IFS= read -r line; do
-  case "$line" in
-    Playing)
-      echo "Detected Playing -> stopping wluma"
-      stop_wluma
-      ;;
-    Paused|Stopped)
-      echo "Detected Paused/Stopped -> starting wluma"
-      start_wluma
-      ;;
-    *)
-      echo "playerctl event: $line"
-      ;;
-  esac
-done
-
+while read -r status; do
+    if [[ "$status" == "Playing" ]]; then
+        if is_video; then
+            systemctl --user stop wluma.service
+        else
+            systemctl --user start wluma.service
+        fi
+    else
+        systemctl --user start wluma.service
+    fi
+done < <(playerctl --follow status)
