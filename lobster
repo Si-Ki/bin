@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-LOBSTER_VERSION="4.5.1"
+LOBSTER_VERSION="4.6.0"
 
 ### General Variables ###
 config_file="$HOME/.config/lobster/lobster_config.sh"
@@ -18,6 +18,7 @@ nl='
 # These are not arbitrary, but determined by rofi kb-custom-1 and kb-custom-2 exit codes
 BACK_CODE=10
 FORWARD_CODE=11
+API_URL="https://dec.eatmynerds.live"
 
 ### Notifications ###
 command -v notify-send >/dev/null 2>&1 && notify="true" || notify="false" # check if notify-send is installed
@@ -113,6 +114,8 @@ usage() {
       Specify the subtitle language (if no language is provided, it defaults to english)
     --rofi, --external-menu
       Use rofi instead of fzf
+    -n, --no-subs
+      Disable subtitles
     -p, --provider
       Specify the provider to watch from (if no provider is provided, it defaults to Vidcloud) (currently supported: Vidcloud, UpCloud)
     -q, --quality
@@ -327,7 +330,7 @@ EOF
                         rc="$BACK_CODE"
                         choice=${choice#*"$nl"}
                         ;;
-                    "$nl"*) choice=${choice#"$nl"} ;;
+                    "$nl"*) choice=${choice#*"$nl"} ;;
                     *) exit 1 ;;
                 esac
             fi
@@ -444,7 +447,7 @@ EOF
         pids=""
 
         # run the while-loop in the current shell
-        while IFS='	' read -r cover_url id type title; do
+        while IFS='     ' read -r cover_url id type title; do
             [ -z "$cover_url" ] && continue                    # skip empty lines
             printf '%s\n' "$cover_url" >"$tmp_dir/image_links" # For Discord rich presence
 
@@ -491,7 +494,7 @@ EOF
                     rc="$BACK_CODE"
                     choice=${choice#*"$nl"}
                     ;;
-                "$nl"*) choice=${choice#"$nl"} ;;
+                "$nl"*) choice=${choice#*"$nl"} ;;
                 *) exit 1 ;;
             esac
             ueberzugpp cmd -s "$LOBSTER_UEBERZUG_SOCKET" -a exit
@@ -512,7 +515,7 @@ EOF
                     rc="$BACK_CODE"
                     choice=${choice#*"$nl"}
                     ;;
-                "$nl"*) choice=${choice#"$nl"} ;;
+                "$nl"*) choice=${choice#*"$nl"} ;;
                 *) exit 1 ;;
             esac
         fi
@@ -560,31 +563,32 @@ EOF
         fi
     }
 
-    extract_from_json() {
-        encrypted_video_link=$(printf "%s" "$json_data" | tr "{|}" "\n" | $sed -nE "s_.*\"sources\":\"([^\"]*)\".*_\1_p" | head -1)
-        key=$(curl -s "https://raw.githubusercontent.com/eatmynerds/key/refs/heads/e1/key.txt")
-        video_link=$(printf "%s" "$encrypted_video_link" | base64 -d | openssl enc -aes-256-cbc -d -md md5 -k "$key" 2>/dev/null | $sed -nE "s_.*\"file\":\"([^\"]*)\".*_\1_p")
+    extract_from_embed() {
+        api_url="${API_URL}/?url=${embed_link}"
+        json_data=$(curl -s "${api_url}")
+        video_link=$(printf "%s" "$json_data" | $sed -nE "s_.*\"file\":\"([^\"]*\.m3u8)\".*_\1_p" | head -1)
 
-        [ -n "$quality" ] && video_link=$(printf "%s" "$video_link" | $sed -e "s|/playlist.m3u8|/$quality/index.m3u8|")
+        [ -n "$quality" ] && video_link=$(printf "%s" "$video_link" | sed -e "s|/playlist.m3u8|/$quality/index.m3u8|")
 
         [ "$json_output" = "true" ] && printf "%s\n" "$json_data" && exit 0
-        subs_links=$(printf "%s" "$json_data" | tr "{}" "\n" | $sed -nE "s@.*\"file\":\"([^\"]*)\",\"label\":\"(.$subs_language)[,\"\ ].*@\1@p")
-        subs_arg="--sub-file"
-        num_subs=$(printf "%s" "$subs_links" | wc -l)
-        if [ "$num_subs" -gt 0 ]; then
-            subs_links=$(printf "%s" "$subs_links" | $sed -e "s/:/\\$path_thing:/g" -e "H;1h;\$!d;x;y/\n/$separator/" -e "s/$separator\$//")
-            subs_arg="--sub-files"
-        fi
-        [ -z "$subs_links" ] && send_notification "No subtitles found"
-    }
 
-    get_json() {
-        # get the juicy links
-        parse_embed=$(printf "%s" "$embed_link" | $sed -nE "s_(.*)/embed-(1|2)/(.*)\?z=\$_\1\t\2\t\3_p")
-        provider_link=$(printf "%s" "$parse_embed" | cut -f1)
-        source_id=$(printf "%s" "$parse_embed" | cut -f3 | sed -E "s|.*/||")
-        json_data=$(curl -s "${provider_link}/embed-1/v2/e-1/getSources?id=${source_id}" -H "X-Requested-With: XMLHttpRequest")
-        [ -n "$json_data" ] && extract_from_json
+        if [ "$no_subs" = "true" ]; then
+            send_notification "Continuing without subtitles"
+        else
+            subs_links=$(printf "%s" "$json_data" | tr '{' '\n' | $sed -n "s/.*\"file\":\"\([^\"]*\)\".*\"label\":\"[^\"]*${subs_language}[^\"]*\".*/\1/Ip")
+
+            if [ -z "$subs_links" ]; then
+                send_notification "No subtitles found for language '$subs_language'"
+                subs_arg=""
+            else
+                subs_arg="--sub-file"
+                num_subs=$(printf "%s" "$subs_links" | wc -l)
+                if [ "$num_subs" -gt 0 ]; then
+                    subs_links=$(printf "%s" "$subs_links" | sed -e "s/:/\\$path_thing:/g" -e "H;1h;\$!d;x;y/\n/$separator/" -e "s/$separator\$//")
+                    subs_arg="--sub-files"
+                fi
+            fi
+        fi
     }
 
     ### History ###
@@ -682,7 +686,7 @@ EOF
                     id    = $3
                     type  = $4
                     cover_url = (type == "tv") ? $10 : $5
-                    print cover_url "\t" id "\t" type "\t" title  
+                    print cover_url "\t" id "\t" type "\t" title
                 }
                 ' "$histfile"
             )
@@ -825,6 +829,16 @@ EOF
                 save_progress
                 ;;
             mpv_android) nohup am start --user 0 -a android.intent.action.VIEW -d "$video_link" -n is.xyz.mpv/.MPVActivity -e "title" "$displayed_title" >/dev/null 2>&1 & ;;
+            iSH)
+                # Check if $subs_links is not empty
+                if [ -n "$subs_links" ]; then
+                    first_sub=$(printf "%s" "$subs_links" | sed 's/https\\:/https:/g; s/:\([^\/]\)/#\1/g')
+                else
+                    first_sub=""
+                fi
+                printf "\e]8;;vlc-x-callback://x-callback-url/stream?url=%s&sub=%s\a~ Tap to open VLC ~\e]8;;\a\n" "$video_link" "$first_sub"
+                sleep 5
+                ;;
             *yncpla*) nohup "syncplay" "$video_link" -- --force-media-title="${displayed_title}" >/dev/null 2>&1 & ;;
             *) $player "$video_link" ;;
         esac
@@ -858,23 +872,32 @@ EOF
         ffmpeg_subs_links=$(printf "%s" "$subs_links" | sed 's/:\([^\/]\)/\nh/g; s/\\:/:/g' | while read -r sub_link; do
             printf " -i %s" "$sub_link"
         done)
-        sub_ops="$ffmpeg_subs_links -map 0:v -map 0:a"
-        if [ "$num_subs" -eq 0 ]; then
-            sub_ops=" -i $subs_links -map 0:v -map 0:a -map 1"
-            ffmpeg_meta="-metadata:s:s:0 language=$language"
+
+        sub_ops=""
+        ffmpeg_meta=""
+        ffmpeg_maps=""
+
+        if [ "$no_subs" = "true" ]; then
+            # no subtitles
+            sub_ops=""
         else
-            i=1
-            for i in $(seq 1 "$num_subs"); do
-                ffmpeg_maps="$ffmpeg_maps -map $i"
-                ffmpeg_meta="$ffmpeg_meta -metadata:s:s:$((i - 1)) language=$(printf "%s_%s" "$language" "$i")"
-                i=$((i + 1))
-            done
+            sub_ops="$ffmpeg_subs_links -map 0:v -map 0:a"
+            if [ "$num_subs" -eq 0 ]; then
+                sub_ops=" -i $subs_links -map 0:v -map 0:a -map 1"
+                ffmpeg_meta="-metadata:s:s:0 language=$language"
+            else
+                for i in $(seq 1 "$num_subs"); do
+                    ffmpeg_maps="$ffmpeg_maps -map $i"
+                    ffmpeg_meta="$ffmpeg_meta -metadata:s:s:$((i - 1)) language=$(printf "%s_%s" "$language" "$i")"
+                done
+            fi
+            sub_ops="$sub_ops $ffmpeg_maps -c:v copy -c:a copy -c:s srt $ffmpeg_meta"
         fi
 
-        sub_ops="$sub_ops $ffmpeg_maps -c:v copy -c:a copy -c:s srt $ffmpeg_meta"
         # shellcheck disable=SC2086
         ffmpeg -loglevel error -stats -i "$1" $sub_ops -c copy "$dir.mkv"
     }
+
     choose_from_trending_or_recent() {
         path=$1
         section=$2
@@ -893,7 +916,7 @@ EOF
         while [ "$keep_running" = "true" ]; do
             get_embed
             [ -z "$embed_link" ] && exit 1
-            get_json
+            extract_from_embed
             [ -z "$video_link" ] && exit 1
             if [ "$download" = "true" ]; then
                 if [ "$media_type" = "movie" ]; then
@@ -906,7 +929,7 @@ EOF
                     fi
                 else
                     if [ "$image_preview" = "true" ]; then
-                        download_video "$video_link" "$title - $season_title - $episode_title" "$download_dir" "$json_data" "$images_cache_dir/  $title ($media_type)  $media_id.jpg" &
+                        download_video "$video_link" "$title - $season_title - $episode_title" "$download_dir" "$json_data" "$images_cache_dir/  $title - $season_title - $episode_title ($media_type)  $media_id.jpg" &
                         send_notification "Finished downloading" "5000" "$images_cache_dir/  $title - $season_title - $episode_title ($media_type)  $media_id.jpg" "$title - $season_title - $episode_title"
                     else
                         download_video "$video_link" "$title - $season_title - $episode_title" "$download_dir" "$json_data" &
@@ -987,6 +1010,8 @@ EOF
             player="mpv.exe"
         elif uname -a | grep -q "ndroid" 2>/dev/null; then
             player="mpv_android"
+        elif uname -a | grep -q "ish" 2>/dev/null; then
+            player="iSH"
         else
             dep_ch mpv.exe
         fi
@@ -1093,6 +1118,9 @@ EOF
                 set -x
                 debug="true"
                 shift
+                ;;
+            -n | --no-subs)
+                no_subs="true" && shift
                 ;;
             *)
                 if [ "${1#-}" != "$1" ]; then

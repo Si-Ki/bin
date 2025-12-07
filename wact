@@ -1,7 +1,7 @@
 #!/bin/sh
 # A dmenu wrapper script for system functions.
 
-case "$(printf "󰍁 Logout\n󰒲 Hibernate\n Reboot\n󰛉 Kill\n Sleep" | tofi --prompt-text "")" in
+case "$(printf "󰍁 Logout\n󰒲 Hibernate\n Reboot\n󰛉 Kill\n Sleep" | fuzzel -d -l 5)" in
 	'󰍁 Logout') loginctl terminate-user $USER ;;
   '󰒲 Hibernate') systemctl hibernate ;;
 	' Sleep') swaylock & doas systemctl sleep ;;
