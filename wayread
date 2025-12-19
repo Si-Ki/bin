@@ -6,7 +6,7 @@ bkdir="$XDG_DATA_HOME/Books"
 cd "$bkdir"
 
 picker() {
-  sel="$(ls | tofi --prompt-text "Read:")"
+  sel="$(ls | fuzzel -d -p "Read:")"
   if [ -d "$sel" ]; then
     cd "$sel"
     picker

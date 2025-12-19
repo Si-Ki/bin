@@ -3,10 +3,16 @@ source /home/siki/.config/zsh/functions.zsh
 
 if [[ -f "/tmp/recordilock" ]]; then
   kill -s INT $(pidof wf-recorder)
-else;
+else
+  area="$(slurp)" || {
+    echo "cancelled 󰜺 " >~/.local/share/waybar-screen-rec
+    sleep 1
+    echo ''>~/.local/share/waybar-screen-rec
+      exit 0
+    }
   touch /tmp/recordilock
   echo "rec 󰻃 " >~/.local/share/waybar-screen-rec 
-  wf-recorder -Dyf ~/vid/sr/original.mp4
+  wf-recorder -g "$area" -Dyf ~/vid/sr/original.mp4
   echo "comp  " >~/.local/share/waybar-screen-rec
   ffmpeg -y -i ~/vid/sr/original.mp4 \
     -an \
@@ -16,6 +22,8 @@ else;
     ~/vid/sr/compressed.mp4
   rm -f /tmp/recordilock
   echo "copy  " >~/.local/share/waybar-screen-rec
+  fyi "screen-rec link copied to clipboard."
   copyl ~/vid/sr/compressed.mp4
   echo >~/.local/share/waybar-screen-rec
+fi
 fi

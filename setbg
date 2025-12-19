@@ -15,7 +15,7 @@ zathuraconf="${XDG_CONFIG_HOME:-$HOME/.config}/zathura/zathurarc"
 
 trueloc="$(readlink -f "$1")" &&
 case "$(file --mime-type -b "$trueloc")" in
-	image/* ) ln -sf "$(readlink -f "$1")" "$bgloc" && notify-send -r 5 -i "$bgloc" "Changing wallpaper...";;
+	image/* ) ln -sf "$(readlink -f "$1")" "$bgloc" && fyi -r 5 -i "$bgloc" "Wallpaper Changed";;
 	inode/directory ) ln -sf "$(find "$trueloc" -iregex '.*.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1)" "$bgloc" && notify-send -r 5 -i "$bgloc" "Random Wallpaper chosen.";;
 esac
 
